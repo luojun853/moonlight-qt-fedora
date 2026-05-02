@@ -14,6 +14,7 @@ Source0:     %{url}/archive/refs/tags/v%{version}.tar.gz#/%{name}-%{version}.tar
 BuildRoot:   %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: qt6-qtsvg-devel
 BuildRequires: qt6-qtdeclarative-devel
+BuildRequires: qt6-qtmultimedia-devel
 BuildRequires: openssl-devel
 BuildRequires: SDL2-devel
 BuildRequires: SDL2_ttf-devel
