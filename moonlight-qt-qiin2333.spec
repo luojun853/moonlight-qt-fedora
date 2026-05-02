@@ -47,7 +47,7 @@ Moonlight PC is an open source PC client for NVIDIA
 GameStream and Sunshine. (qiin2333 fork with extra features)
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n moonlight-qt-%{version}
 # add git info to retrieve submodules
 git clone --bare --depth=1 --single-branch --branch v%{version} %{url} .git
 git init
@@ -57,7 +57,7 @@ git -c submodule."libs".update=none submodule update --init --recursive --depth=
 
 %build
 # Configure and build the project
-qmake6 PREFIX=/usr %{name}.pro
+qmake6 PREFIX=/usr moonlight-qt.pro
 make release
 
 %install
