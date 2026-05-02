@@ -1,14 +1,14 @@
 %global debug_package       %{nil}
-%define major_version       6.1.0
+%define major_version       6.2.70
 %define release_version     1
 
-Name:        moonlight-qt
+Name:        moonlight-qt-qiin2333
 Version:     %{major_version}
 Release:     %{release_version}%{?dist}
-Summary:     Open source PC client for NVIDIA GameStream and Sunshine
+Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 fork with extra features)
 
 License:     GPL-3.0
-URL:         https://github.com/moonlight-stream/moonlight-qt
+URL:         https://github.com/qiin2333/moonlight-qt
 Source0:     %{url}/archive/refs/tags/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 
 BuildRoot:   %{_tmppath}/%{name}-%{version}-%{release}-root
@@ -44,7 +44,7 @@ Requires:    libdrm
 
 %description
 Moonlight PC is an open source PC client for NVIDIA
-GameStream and Sunshine.
+GameStream and Sunshine. (qiin2333 fork with extra features)
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -69,7 +69,3 @@ make INSTALL_ROOT=$RPM_BUILD_ROOT install
 %attr(644,root,root) %{_datadir}/applications/com.moonlight_stream.Moonlight.desktop
 %attr(644,root,root) %{_datadir}/icons/hicolor/scalable/apps/moonlight.svg
 %attr(644,root,root) %{_datadir}/metainfo/com.moonlight_stream.Moonlight.appdata.xml
-
-%changelog
-* Sat Feb 22 2025 Federico Manzella <ferdiu.manzella@gmail.com> - 6.1.0-1
-- Initial packaging of moonlight-qt
