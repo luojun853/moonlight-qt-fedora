@@ -9,7 +9,6 @@ Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 
 
 License:     GPL-3.0
 URL:         https://github.com/qiin2333/moonlight-qt
-Source0:     https://github.com/qiin2333/moonlight-qt.git
 Provides:    moonlight-qt
 Conflicts:   moonlight-qt
 
