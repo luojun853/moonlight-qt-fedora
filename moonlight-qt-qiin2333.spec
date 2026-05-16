@@ -48,7 +48,7 @@ Moonlight PC is an open source PC client for NVIDIA
 GameStream and Sunshine. (qiin2333 fork with extra features)
 
 %prep
-git clone %{SOURCE0} moonlight-qt-%{version}
+git clone https://github.com/qiin2333/moonlight-qt moonlight-qt-%{version}
 cd moonlight-qt-%{version}
 git checkout v%{version}
 git submodule update --init --recursive --depth 1
