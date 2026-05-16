@@ -12,6 +12,7 @@ URL:         https://github.com/qiin2333/moonlight-qt
 Provides:    moonlight-qt
 Conflicts:   moonlight-qt
 
+BuildRoot:   %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: qt6-qtsvg-devel
 BuildRequires: qt6-qtdeclarative-devel
 BuildRequires: qt6-qtmultimedia-devel
