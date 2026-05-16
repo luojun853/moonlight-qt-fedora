@@ -49,10 +49,6 @@ GameStream and Sunshine. (qiin2333 fork with extra features)
 
 %prep
 %setup -q -n moonlight-qt-%{version}
-# add git info to retrieve submodules
-git clone --bare --depth=1 --single-branch --branch v%{version} %{url} .git
-git init
-git reset --hard HEAD
 # skip libs since they are not needed in linux
 git -c submodule."libs".update=none submodule update --init --recursive --depth=1 --single-branch
 
