@@ -67,6 +67,7 @@ make INSTALL_ROOT=$RPM_BUILD_ROOT install
 
 %files
 %attr(755,root,root) %{_bindir}/moonlight
+%attr(755,root,root) %{_bindir}/moonlight-clipboard-helper
 %attr(644,root,root) %{_datadir}/applications/com.moonlight_stream.Moonlight.desktop
 %attr(644,root,root) %{_datadir}/icons/hicolor/scalable/apps/moonlight.svg
 %attr(644,root,root) %{_datadir}/metainfo/com.moonlight_stream.Moonlight.appdata.xml
