@@ -1,5 +1,5 @@
 %global debug_package       %{nil}
-%define major_version       6.2.90
+%define major_version       6.2.92
 %define release_version     1
 
 Name:        moonlight-qt-qiin2333
