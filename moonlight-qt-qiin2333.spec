@@ -55,6 +55,7 @@ git init
 git reset --hard HEAD
 # skip libs since they are not needed in linux
 git -c submodule."libs".update=none submodule update --init --recursive --depth=1 --single-branch
+git apply ./app/deploy/linux/appimage/*.patch
 
 %build
 # Configure and build the project
