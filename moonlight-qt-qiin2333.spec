@@ -1,10 +1,8 @@
 %global debug_package       %{nil}
-%define major_version       6.3.7
-%define release_version     1
 
 Name:        moonlight-qt-qiin2333
-Version:     %{major_version}
-Release:     %{release_version}%{?dist}
+Version:     6.3.7
+Release:     1%{?dist}
 Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 fork with extra features)
 
 License:     GPL-3.0
