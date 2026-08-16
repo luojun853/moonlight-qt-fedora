@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get latest upstream tag
+      - name: Get latest upstream release
         id: upstream
         shell: bash
         run: |
@@ -32,30 +32,33 @@ jobs:
 
           echo "Checking upstream: ${UPSTREAM_REPO}"
 
-          tag="$(
-            git ls-remote \
-              --tags \
-              --refs \
-              "https://github.com/${UPSTREAM_REPO}.git" |
-            awk -F/ '{print $3}' |
-            grep -E '^v?[0-9]+\.[0-9]+(\.[0-9]+)?([.-].*)?$' |
-            sort -V |
-            tail -n1
+          release="$(
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --location \
+              "https://api.github.com/repos/${UPSTREAM_REPO}/releases/latest"
           )"
 
-          if [ -z "$tag" ]; then
-            echo "ERROR: No suitable upstream tag found"
+          tag="$(
+            echo "$release" |
+            jq -r '.tag_name'
+          )"
+
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "ERROR: No latest release found"
             exit 1
           fi
 
           version="${tag#v}"
 
-          echo "Latest upstream tag: ${tag}"
+          echo "Latest upstream release tag: ${tag}"
           echo "RPM version: ${version}"
 
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-
+        
       - name: Get current spec version
         id: current
         shell: bash
