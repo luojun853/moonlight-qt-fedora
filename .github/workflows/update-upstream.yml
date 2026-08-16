@@ -1,0 +1,116 @@
+name: Update from upstream
+
+on:
+  schedule:
+    # 每小时检查一次
+    - cron: "0 */12 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  UPSTREAM_REPO: qiin2333/moonlight-qt
+  SPEC_FILE: moonlight-qt-qiin2333.spec
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest upstream tag
+        id: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Checking upstream: ${UPSTREAM_REPO}"
+
+          tag="$(
+            git ls-remote \
+              --tags \
+              --refs \
+              "https://github.com/${UPSTREAM_REPO}.git" |
+            awk -F/ '{print $3}' |
+            grep -E '^v?[0-9]+\.[0-9]+(\.[0-9]+)?([.-].*)?$' |
+            sort -V |
+            tail -n1
+          )"
+
+          if [ -z "$tag" ]; then
+            echo "ERROR: No suitable upstream tag found"
+            exit 1
+          fi
+
+          version="${tag#v}"
+
+          echo "Latest upstream tag: ${tag}"
+          echo "RPM version: ${version}"
+
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Get current spec version
+        id: current
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="$(
+            awk '
+              /^[[:space:]]*Version:[[:space:]]*/ {
+                print $2
+                exit
+              }
+            ' "$SPEC_FILE"
+          )"
+
+          if [ -z "$version" ]; then
+            echo "ERROR: Version field not found in ${SPEC_FILE}"
+            exit 1
+          fi
+
+          echo "Current spec version: ${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Update spec version
+        if: steps.current.outputs.version != steps.upstream.outputs.version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          new_version="${{ steps.upstream.outputs.version }}"
+
+          sed -i \
+            -E \
+            "s/^([[:space:]]*Version:[[:space:]]*).*/\1${new_version}/" \
+            "$SPEC_FILE"
+
+          echo "Updated ${SPEC_FILE}:"
+
+          git diff -- "$SPEC_FILE"
+
+      - name: Commit and push
+        if: steps.current.outputs.version != steps.upstream.outputs.version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name \
+            "github-actions[bot]"
+
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add "$SPEC_FILE"
+
+          git commit \
+            -m "Update moonlight-qt to ${{ steps.upstream.outputs.version }}"
+
+          git push
