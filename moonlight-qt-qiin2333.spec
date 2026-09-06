@@ -1,7 +1,7 @@
 %global debug_package       %{nil}
 
 Name:        moonlight-qt-qiin2333
-Version:     6.3.14
+Version:     6.4.0
 Release:     1%{?dist}
 Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 fork with extra features)
 
