@@ -2,7 +2,7 @@
 
 Name:        moonlight-qt-qiin2333
 Version:     6.4.5
-Release:     1%{?dist}
+Release:     2%{?dist}
 Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 fork with extra features)
 
 License:     GPL-3.0
@@ -13,6 +13,7 @@ BuildRoot:   %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: qt6-qtsvg-devel
 BuildRequires: qt6-qtdeclarative-devel
 BuildRequires: qt6-qtmultimedia-devel
+BuildRequires: qt6-qtbase-private-devel
 BuildRequires: openssl-devel
 BuildRequires: SDL2-devel
 BuildRequires: SDL2_ttf-devel
@@ -71,5 +72,7 @@ make INSTALL_ROOT=$RPM_BUILD_ROOT install
 %attr(644,root,root) %{_datadir}/metainfo/com.moonlight_stream.Moonlight.appdata.xml
 
 %changelog
+* Wed Oct 07 2026 Jemn853 <as853472853@gmail.com> - 6.4.5-2
+- Add BuildRequires: qt6-qtbase-private-devel for the native Wayland bridge
 * Wed Oct 07 2026 Jemn853 <as853472853@gmail.com> - 6.4.5-1
 - Update to 6.4.5
