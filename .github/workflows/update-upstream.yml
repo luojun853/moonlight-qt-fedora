@@ -2,7 +2,7 @@ name: Update from upstream
 
 on:
   schedule:
-    # 每小时检查一次
+    # 每 12 小时检查一次
     - cron: "0 */12 * * *"
 
   workflow_dispatch:
@@ -10,9 +10,16 @@ on:
 permissions:
   contents: write
 
+# 串行化同仓库的 run，避免定时与手动 dispatch 并发 push 冲突
+concurrency:
+  group: update-upstream
+  cancel-in-progress: false
+
 env:
   UPSTREAM_REPO: qiin2333/moonlight-qt
   SPEC_FILE: moonlight-qt-qiin2333.spec
+  AUTHOR_NAME: Jemn853
+  AUTHOR_EMAIL: as853472853@gmail.com
 
 jobs:
   update:
@@ -38,13 +45,14 @@ jobs:
               --silent \
               --show-error \
               --location \
+              --retry 3 \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Authorization: Bearer ${{ github.token }}" \
               "https://api.github.com/repos/${UPSTREAM_REPO}/releases/latest"
           )"
 
-          tag="$(
-            echo "$release" |
-            jq -r '.tag_name'
-          )"
+          tag="$(echo "$release" | jq -r '.tag_name')"
 
           if [ -z "$tag" ] || [ "$tag" = "null" ]; then
             echo "ERROR: No latest release found"
@@ -53,12 +61,17 @@ jobs:
 
           version="${tag#v}"
 
+          if ! [[ "$version" =~ ^[0-9]+([.][0-9]+)*$ ]]; then
+            echo "ERROR: Unexpected version '${version}' from tag '${tag}'"
+            exit 1
+          fi
+
           echo "Latest upstream release tag: ${tag}"
           echo "RPM version: ${version}"
 
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-        
+
       - name: Get current spec version
         id: current
         shell: bash
@@ -66,12 +79,7 @@ jobs:
           set -euo pipefail
 
           version="$(
-            awk '
-              /^[[:space:]]*Version:[[:space:]]*/ {
-                print $2
-                exit
-              }
-            ' "$SPEC_FILE"
+            awk '/^[[:space:]]*Version:[[:space:]]*/ { print $2; exit }' "$SPEC_FILE"
           )"
 
           if [ -z "$version" ]; then
@@ -82,38 +90,127 @@ jobs:
           echo "Current spec version: ${version}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Update spec version
-        if: steps.current.outputs.version != steps.upstream.outputs.version
+      # 合并「更新 Version/Release」与「补写 changelog」，幂等
+      - name: Update spec (version + changelog)
+        id: spec
         shell: bash
+        env:
+          NEW_VERSION: ${{ steps.upstream.outputs.version }}
         run: |
           set -euo pipefail
 
-          new_version="${{ steps.upstream.outputs.version }}"
+          DATE_STR="$(LC_ALL=C date -u '+%a %b %d %Y')"
+          export DATE_STR
+          echo "Changelog date: ${DATE_STR}"
 
-          sed -i \
-            -E \
-            "s/^([[:space:]]*Version:[[:space:]]*).*/\1${new_version}/" \
-            "$SPEC_FILE"
+          python3 - <<'PY'
+          import os, re, sys
 
-          echo "Updated ${SPEC_FILE}:"
+          spec = os.environ["SPEC_FILE"]
+          new_version = os.environ["NEW_VERSION"]
+          author = os.environ["AUTHOR_NAME"]
+          email = os.environ["AUTHOR_EMAIL"]
+          date_str = os.environ["DATE_STR"]
 
-          git diff -- "$SPEC_FILE"
+          with open(spec, "r", encoding="utf-8") as fh:
+              lines = fh.read().splitlines()
+
+          def first_match(pattern):
+              for ln in lines:
+                  m = re.match(pattern, ln)
+                  if m:
+                      return m.group(1)
+              return None
+
+          cur_version = first_match(r'^\s*Version:\s*(\S+)')
+          release_raw = first_match(r'^\s*Release:\s*(\S+)')
+
+          if cur_version is None or release_raw is None:
+              sys.exit("ERROR: Version or Release field not found in spec")
+
+          # '1%{?dist}' -> '1'
+          release = release_raw.split('%', 1)[0] or "1"
+
+          changed = False
+
+          # 版本变化时：改写 Version，并把 Release 重置为 1%{?dist}
+          if cur_version != new_version:
+              lines = [
+                  re.sub(r'(^\s*Version:\s*)\S+', r'\g<1>' + new_version, ln)
+                  if re.match(r'^\s*Version:\s*\S+', ln) else ln
+                  for ln in lines
+              ]
+              lines = [
+                  re.sub(r'(^\s*Release:\s*)\S+', r'\g<1>1%{?dist}', ln)
+                  if re.match(r'^\s*Release:\s*\S+', ln) else ln
+                  for ln in lines
+              ]
+              release = "1"
+              changed = True
+
+          evr = f"{new_version}-{release}"
+
+          # 幂等：精确匹配「<作者> - <EVR>」，且其后必须是行尾或空白
+          sig = f"{author} <{email}> - {evr}"
+          exists = any(
+              re.search(re.escape(sig) + r'(?=\s|$)', ln) for ln in lines
+          )
+
+          if not exists:
+              entry = [
+                  f"* {date_str} {author} <{email}> - {evr}",
+                  f"- Update to {new_version}",
+              ]
+
+              idx = None
+              for i, ln in enumerate(lines):
+                  if re.match(r'^\s*%changelog\s*$', ln):
+                      idx = i
+
+              if idx is None:
+                  # 没有 %changelog：吃掉末尾空行，补一个空行 + %changelog + 条目
+                  while lines and lines[-1].strip() == "":
+                      lines.pop()
+                  lines.append("")
+                  lines.append("%changelog")
+                  lines.extend(entry)
+              else:
+                  # 已有 %changelog：插到关键字行正下方（最新在最上）
+                  lines[idx + 1:idx + 1] = entry
+
+              changed = True
+
+          if changed:
+              with open(spec, "w", encoding="utf-8", newline="\n") as fh:
+                  fh.write("\n".join(lines) + "\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"changed={'true' if changed else 'false'}\n")
+              fh.write(f"evr={evr}\n")
+          PY
+
+          echo "--- resulting spec tail ---"
+          tail -n 12 "$SPEC_FILE"
 
       - name: Commit and push
-        if: steps.current.outputs.version != steps.upstream.outputs.version
+        if: steps.spec.outputs.changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
 
-          git config user.name \
-            "github-actions[bot]"
-
-          git config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add "$SPEC_FILE"
 
-          git commit \
-            -m "Update moonlight-qt to ${{ steps.upstream.outputs.version }}"
+          # 双保险：拦住空提交
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
 
-          git push
+          git commit -m "Update moonlight-qt spec to ${{ steps.spec.outputs.evr }}"
+
+          # 并发兜底：若别的 run 已推进远端，先 rebase 再 push
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

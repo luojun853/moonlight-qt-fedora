@@ -69,3 +69,7 @@ make INSTALL_ROOT=$RPM_BUILD_ROOT install
 %attr(644,root,root) %{_datadir}/applications/com.moonlight_stream.Moonlight.desktop
 %attr(644,root,root) %{_datadir}/icons/hicolor/scalable/apps/moonlight.svg
 %attr(644,root,root) %{_datadir}/metainfo/com.moonlight_stream.Moonlight.appdata.xml
+
+%changelog
+* Wed Oct 07 2026 Jemn853 <as853472853@gmail.com> - 6.4.5-1
+- Update to 6.4.5
