@@ -1,8 +1,8 @@
 %global debug_package       %{nil}
 
 Name:        moonlight-qt-qiin2333
-Version:     6.5.0
-Release:     2%{?dist}
+Version:     6.5.1
+Release:     1%{?dist}
 Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 fork with extra features)
 
 License:     GPL-3.0-only AND GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND Zlib
@@ -102,6 +102,8 @@ install -Dpm 0644 h264bitstream/LICENSE $RPM_BUILD_ROOT%{_licensedir}/%{name}/LI
 %license %{_licensedir}/%{name}/LICENSE.h264bitstream
 
 %changelog
+* Fri Oct 23 2026 Jemn853 <as853472853@gmail.com> - 6.5.1-1
+- Update to 6.5.1
 * Sun Oct 11 2026 Jemn853 <as853472853@gmail.com> - 6.5.0-2
 - Add Requires: qt6-qtwayland and Conflicts: moonlight-qt
 - Switch License to an SPDX expression and ship the GPLv3/LGPL-2.1 license texts
