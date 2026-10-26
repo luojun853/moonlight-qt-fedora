@@ -1,7 +1,7 @@
 %global debug_package       %{nil}
 
 Name:        moonlight-qt-qiin2333
-Version:     6.5.2
+Version:     6.5.3
 Release:     1%{?dist}
 Summary:     Open source PC client for NVIDIA GameStream and Sunshine (qiin2333 fork with extra features)
 
@@ -102,6 +102,8 @@ install -Dpm 0644 h264bitstream/LICENSE $RPM_BUILD_ROOT%{_licensedir}/%{name}/LI
 %license %{_licensedir}/%{name}/LICENSE.h264bitstream
 
 %changelog
+* Mon Oct 26 2026 Jemn853 <as853472853@gmail.com> - 6.5.3-1
+- Update to 6.5.3
 * Sat Oct 24 2026 Jemn853 <as853472853@gmail.com> - 6.5.2-1
 - Update to 6.5.2
 * Fri Oct 23 2026 Jemn853 <as853472853@gmail.com> - 6.5.1-1
